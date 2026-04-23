@@ -157,12 +157,16 @@ const curriculum = subjects
               })
               .filter(Boolean);
 
+            // completion: "" | "quiz:N" | "submit"
+            const completion = String(les.completion || '').trim().toLowerCase();
+
             return {
               id: les.lesson_id,
               title: les.title,
               type: les.type_label || '',
               autoNext: autoNextDefault,
               notes: les.notes || '',
+              completion: completion || null,
               blocks: lesBlocks,
             };
           });

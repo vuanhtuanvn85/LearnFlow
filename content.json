@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-04-23T09:45:55.858Z",
+  "_generated": "2026-04-23T10:24:37.854Z",
   "_source": "learnflow-content.xlsx",
   "curriculum": [
     {
@@ -25,6 +25,7 @@
               "type": "Bài đọc · 4 phút",
               "autoNext": false,
               "notes": "",
+              "completion": "quiz:1",
               "blocks": [
                 {
                   "type": "text",
@@ -51,6 +52,7 @@
               "type": "Bài đọc + Audio · 5 phút",
               "autoNext": true,
               "notes": "",
+              "completion": "quiz:1",
               "blocks": [
                 {
                   "type": "text",
@@ -90,6 +92,7 @@
               "type": "Bài đọc + Audio · 5 phút",
               "autoNext": true,
               "notes": "",
+              "completion": null,
               "blocks": []
             },
             {
@@ -98,6 +101,7 @@
               "type": "Bài đọc + Audio · 5 phút",
               "autoNext": true,
               "notes": "",
+              "completion": null,
               "blocks": []
             },
             {
@@ -106,6 +110,7 @@
               "type": "Thực hành · 10 phút",
               "autoNext": false,
               "notes": "",
+              "completion": null,
               "blocks": [
                 {
                   "type": "text",

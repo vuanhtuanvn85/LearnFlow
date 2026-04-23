@@ -1,11 +1,12 @@
 import { useState } from 'react';
 
-export default function QuizBlock({ block }) {
+export default function QuizBlock({ block, onCorrect }) {
   const [selected, setSelected] = useState(null);
 
   const handleSelect = (i) => {
-    if (selected !== null) return; // disabled after answer
+    if (selected !== null) return;
     setSelected(i);
+    if (i === block.correct) onCorrect?.();
   };
 
   const getColor = (i) => {
@@ -24,11 +25,8 @@ export default function QuizBlock({ block }) {
 
   return (
     <div style={{
-      background: 'var(--bg2)',
-      border: '1px solid var(--border)',
-      borderRadius: 10,
-      padding: 16,
-      marginBottom: 12,
+      background: 'var(--bg2)', border: '1px solid var(--border)',
+      borderRadius: 10, padding: 16, marginBottom: 12,
     }}>
       <p style={{ margin: '0 0 14px', fontWeight: 500, lineHeight: 1.5 }}>
         {block.question}
@@ -42,11 +40,9 @@ export default function QuizBlock({ block }) {
             style={{
               background: getColor(i),
               border: `1px solid ${getBorder(i)}`,
-              borderRadius: 6,
-              padding: '10px 14px',
+              borderRadius: 6, padding: '10px 14px',
               cursor: selected !== null ? 'default' : 'pointer',
-              textAlign: 'left',
-              color: 'var(--text)',
+              textAlign: 'left', color: 'var(--text)',
               display: 'flex', alignItems: 'center', gap: 10,
               transition: 'background 0.2s, border-color 0.2s',
             }}

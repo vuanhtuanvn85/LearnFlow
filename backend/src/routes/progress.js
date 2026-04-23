@@ -21,4 +21,10 @@ router.post('/:lessonId', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
+// DELETE /api/progress/:lessonId — unmark done
+router.delete('/:lessonId', requireAuth, async (req, res) => {
+  await Progress.deleteOne({ userId: req.user._id, lessonId: req.params.lessonId });
+  res.json({ ok: true });
+});
+
 export default router;

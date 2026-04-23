@@ -15,7 +15,7 @@ export default function App() {
   const [enrolledSubjects, setEnrolledSubjects] = useState(null); // null = chưa load
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const { done, saved, markDone, toggleSaved } = useProgress(user);
+  const { done, saved, markDone, markUndone, toggleSaved } = useProgress(user);
 
   // Load content.json
   useEffect(() => {
@@ -191,6 +191,7 @@ export default function App() {
               onPrev={goPrev}
               onNext={goNext}
               onMarkDone={markDone}
+              onMarkUndone={markUndone}
               onToggleSaved={toggleSaved}
               done={done}
               saved={saved}

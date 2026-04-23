@@ -38,6 +38,17 @@ export function useProgress(user) {
     }
   }, [user]);
 
+  const markUndone = useCallback(async (lessonId) => {
+    setDone(prev => {
+      const next = prev.filter(id => id !== lessonId);
+      localStorage.setItem('lf_done', JSON.stringify(next));
+      return next;
+    });
+    if (user) {
+      await api.delete(`/api/progress/${lessonId}`).catch(() => {});
+    }
+  }, [user]);
+
   const toggleSaved = useCallback(async (lessonId) => {
     setSaved(prev => {
       const next = prev.includes(lessonId)
@@ -56,5 +67,5 @@ export function useProgress(user) {
     }
   }, [user, saved]);
 
-  return { done, saved, markDone, toggleSaved };
+  return { done, saved, markDone, markUndone, toggleSaved };
 }
