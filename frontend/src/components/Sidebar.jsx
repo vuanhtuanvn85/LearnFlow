@@ -26,17 +26,33 @@ function ProgressRing({ pct, size = 18 }) {
   );
 }
 
-export default function Sidebar({ curriculum, currentId, done, saved, onSelect }) {
+export default function Sidebar({ curriculum, allLessons, currentId, done, saved, onSelect }) {
   const [openSubjects, setOpenSubjects] = useState({});
   const [openSessions, setOpenSessions] = useState({});
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('curriculum'); // 'curriculum' | 'saved'
 
   const toggleSubject = (id) => setOpenSubjects(p => ({ ...p, [id]: !p[id] }));
+
+  // Tính set các bài được phép truy cập:
+  // bài đã done + bài đầu tiên chưa done (bài tiếp theo ngay sau chuỗi done liên tiếp)
+  const unlockedIds = useMemo(() => {
+    const set = new Set();
+    for (let i = 0; i < allLessons.length; i++) {
+      const l = allLessons[i];
+      if (done.includes(l.id)) {
+        set.add(l.id);
+      } else {
+        set.add(l.id); // bài đầu tiên chưa done được mở
+        break;         // dừng tại đây, các bài sau bị khóa
+      }
+    }
+    return set;
+  }, [allLessons, done]);
   const toggleSession = (id) => setOpenSessions(p => ({ ...p, [id]: !p[id] }));
 
   // Flatten all lessons for search & saved
-  const allLessons = useMemo(() => {
+  const flatLessons = useMemo(() => {
     const list = [];
     curriculum.forEach(sub => {
       sub.sessions.forEach(ses => {
@@ -49,15 +65,31 @@ export default function Sidebar({ curriculum, currentId, done, saved, onSelect }
   }, [curriculum]);
 
   const savedLessons = useMemo(
-    () => allLessons.filter(l => saved.includes(l.id)),
-    [allLessons, saved]
+    () => flatLessons.filter(l => saved.includes(l.id)),
+    [flatLessons, saved]
   );
+
+  // Group bài đã lưu theo môn học
+  const savedBySubject = useMemo(() => {
+    return curriculum
+      .filter(sub => sub.id && sub.title)
+      .map(sub => {
+        const lessons = [];
+        sub.sessions.forEach(ses =>
+          ses.lessons.forEach(l => {
+            if (saved.includes(l.id)) lessons.push(l);
+          })
+        );
+        return { ...sub, savedLessons: lessons };
+      })
+      .filter(sub => sub.savedLessons.length > 0);
+  }, [curriculum, saved]);
 
   const searchResults = useMemo(() => {
     if (!search.trim()) return [];
     const q = search.toLowerCase();
-    return allLessons.filter(l => l.title.toLowerCase().includes(q));
-  }, [search, allLessons]);
+    return flatLessons.filter(l => l.title.toLowerCase().includes(q));
+  }, [search, flatLessons]);
 
   const getSubjectProgress = (sub) => {
     const ids = sub.sessions.flatMap(s => s.lessons.map(l => l.id));
@@ -113,18 +145,41 @@ export default function Sidebar({ curriculum, currentId, done, saved, onSelect }
               {searchResults.length} kết quả
             </div>
             {searchResults.map(les => (
-              <LessonRow key={les.id} lesson={les} currentId={currentId} done={done} onSelect={onSelect} />
+              <LessonRow key={les.id} lesson={les} currentId={currentId} done={done} onSelect={onSelect} unlocked={unlockedIds.has(les.id)} />
             ))}
           </div>
         )}
 
         {/* Saved tab */}
         {!search.trim() && tab === 'saved' && (
-          savedLessons.length === 0
+          savedBySubject.length === 0
             ? <div style={{ padding: '20px 14px', fontSize: 13, color: 'var(--text-muted)' }}>Chưa có bài nào được lưu.</div>
-            : savedLessons.map(les => (
-              <LessonRow key={les.id} lesson={les} currentId={currentId} done={done} onSelect={onSelect} />
-            ))
+            : savedBySubject.map(sub => {
+              const color = COLOR_MAP[sub.color] || 'var(--accent)';
+              return (
+                <div key={sub.id}>
+                  {/* Subject header */}
+                  <div style={{
+                    padding: '8px 14px 4px',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                  }}>
+                    <span style={{
+                      fontSize: 11, fontWeight: 600, color,
+                      borderLeft: `3px solid ${color}`, paddingLeft: 7,
+                      textTransform: 'uppercase', letterSpacing: '0.04em',
+                    }}>
+                      {sub.title}
+                    </span>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                      {sub.savedLessons.length}
+                    </span>
+                  </div>
+                  {sub.savedLessons.map(les => (
+                    <LessonRow key={les.id} lesson={les} currentId={currentId} done={done} onSelect={onSelect} indent unlocked={unlockedIds.has(les.id)} />
+                  ))}
+                </div>
+              );
+            })
         )}
 
         {/* Curriculum tab */}
@@ -176,7 +231,7 @@ export default function Sidebar({ curriculum, currentId, done, saved, onSelect }
                         </span>
                       </button>
                       {sesOpen && ses.lessons.map(les => (
-                        <LessonRow key={les.id} lesson={les} currentId={currentId} done={done} onSelect={onSelect} indent />
+                        <LessonRow key={les.id} lesson={les} currentId={currentId} done={done} onSelect={onSelect} indent unlocked={unlockedIds.has(les.id)} />
                       ))}
                     </div>
                   );
@@ -189,28 +244,36 @@ export default function Sidebar({ curriculum, currentId, done, saved, onSelect }
   );
 }
 
-function LessonRow({ lesson, currentId, done, onSelect, indent }) {
+function LessonRow({ lesson, currentId, done, onSelect, indent, unlocked }) {
   const isActive = lesson.id === currentId;
   const isDone = done.includes(lesson.id);
+  const locked = !unlocked;
+
   return (
     <button
-      onClick={() => onSelect(lesson.id)}
+      onClick={() => !locked && onSelect(lesson.id)}
+      disabled={locked}
+      title={locked ? 'Hoàn thành bài trước để mở khoá' : ''}
       style={{
-        width: '100%', background: isActive ? 'rgba(79,142,247,0.12)' : 'none',
-        border: 'none', borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
+        width: '100%',
+        background: isActive ? 'rgba(79,142,247,0.12)' : 'none',
+        border: 'none',
+        borderLeft: isActive ? '3px solid var(--accent)' : '3px solid transparent',
         display: 'flex', alignItems: 'center', gap: 8,
         padding: `6px 14px 6px ${indent ? 44 : 14}px`,
-        cursor: 'pointer', color: isActive ? 'var(--accent)' : 'var(--text)',
+        cursor: locked ? 'default' : 'pointer',
+        color: locked ? 'var(--text-muted)' : isActive ? 'var(--accent)' : 'var(--text)',
         textAlign: 'left',
+        opacity: locked ? 0.45 : 1,
       }}
     >
       <span style={{
         width: 14, height: 14, borderRadius: '50%',
-        background: isDone ? 'var(--green)' : 'var(--border)',
+        background: isDone ? 'var(--green)' : locked ? 'var(--border)' : 'var(--border)',
         flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 8, color: '#fff',
+        fontSize: locked ? 9 : 8, color: locked ? 'var(--text-muted)' : '#fff',
       }}>
-        {isDone ? '✓' : ''}
+        {isDone ? '✓' : locked ? '🔒' : ''}
       </span>
       <span style={{ fontSize: 12, lineHeight: 1.3, flex: 1 }}>{lesson.title}</span>
     </button>

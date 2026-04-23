@@ -165,6 +165,7 @@ export default function App() {
         {sidebarOpen && (
           <Sidebar
             curriculum={visibleCurriculum}
+            allLessons={allLessons}
             currentId={currentId}
             done={done}
             saved={saved}
