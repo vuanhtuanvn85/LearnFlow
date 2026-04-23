@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-04-23T01:42:59.782Z",
+  "_generated": "2026-04-23T04:20:00.218Z",
   "_source": "learnflow-content.xlsx",
   "curriculum": [
     {
@@ -32,9 +32,9 @@
                 },
                 {
                   "type": "image+audio",
-                  "imageFile": "python-intro.jpg",
+                  "imageFile": "slide-1.png",
                   "imageLabel": "Giới thiệu Python · 1:42",
-                  "audioFile": "python-intro.mp3",
+                  "audioFile": "slide_1.mp3",
                   "audioLabel": "Giới thiệu Python · 1:42",
                   "audioDuration": 102,
                   "autoNext": false
