@@ -11,6 +11,7 @@ export default function App() {
   const [curriculum, setCurriculum] = useState([]);
   const [currentId, setCurrentId] = useState(() => localStorage.getItem('lf_lastLesson') || null);
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); // đang kiểm tra session
   const [enrolledSubjects, setEnrolledSubjects] = useState(null); // null = chưa load
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -34,7 +35,10 @@ export default function App() {
 
   // Check auth
   useEffect(() => {
-    api.get('/auth/me').then(r => setUser(r.data)).catch(() => setUser(null));
+    api.get('/auth/me')
+      .then(r => setUser(r.data))
+      .catch(() => setUser(null))
+      .finally(() => setAuthLoading(false));
   }, []);
 
   // Fetch enrolled subjects khi user là student
@@ -51,12 +55,13 @@ export default function App() {
     localStorage.setItem('lf_lastLesson', id);
   }, []);
 
-  // Curriculum được lọc theo enrollment (chỉ áp dụng cho student)
+  // Curriculum được lọc theo role / enrollment
   const visibleCurriculum = useMemo(() => {
-    if (!user || user.role !== 'student') return curriculum;
-    if (enrolledSubjects === null) return []; // đang load
+    if (authLoading || !user) return []; // chưa xác thực → ẩn hết
+    if (user.role !== 'student') return curriculum; // owner/teacher thấy tất cả
+    if (enrolledSubjects === null) return []; // đang load enrollment
     return curriculum.filter(s => enrolledSubjects.includes(s.id));
-  }, [curriculum, user, enrolledSubjects]);
+  }, [curriculum, user, authLoading, enrolledSubjects]);
 
   // Flatten all lessons (chỉ từ môn được phép xem)
   const allLessons = useMemo(() => {
@@ -95,6 +100,49 @@ export default function App() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [goPrev, goNext, currentId, toggleSaved]);
+
+  // Màn hình loading auth
+  if (authLoading) {
+    return (
+      <div style={{
+        height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'var(--bg)', flexDirection: 'column', gap: 12,
+      }}>
+        <div style={{
+          width: 24, height: 24, border: '3px solid var(--border)',
+          borderTopColor: 'var(--accent)', borderRadius: '50%',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
+    );
+  }
+
+  // Màn hình login khi chưa đăng nhập
+  if (!user) {
+    return (
+      <div style={{
+        height: '100vh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        background: 'var(--bg)', gap: 20,
+      }}>
+        <div style={{ fontSize: 40 }}>📘</div>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>LearnFlow</div>
+        <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Đăng nhập để bắt đầu học</div>
+        <button
+          onClick={() => { window.location.href = '/auth/google'; }}
+          style={{
+            marginTop: 8,
+            background: 'var(--accent)', border: 'none', color: '#fff',
+            borderRadius: 8, padding: '10px 28px', cursor: 'pointer',
+            fontSize: 15, fontWeight: 600,
+          }}
+        >
+          Đăng nhập bằng Google
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
