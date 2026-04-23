@@ -2,10 +2,10 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { formatTime } from '../hooks/useAudio';
 
 function imgSrcOf(folder, n) {
-  return `/learnflow/${folder}/images/slide-${n}.png`;
+  return `/${folder}/images/slide-${n}.png`;
 }
 function audSrcOf(folder, n) {
-  return `/learnflow/${folder}/audio/slide_${n}.mp3`;
+  return `/${folder}/audio/slide_${n}.mp3`;
 }
 
 async function probeSlideCount(folder, maxSlides = 60) {

@@ -18,7 +18,7 @@ function ImageBlock({ block }) {
   return (
     <div style={{ marginBottom: 12 }}>
       <img
-        src={`/learnflow/images/${block.imageFile}`}
+        src={`/images/${block.imageFile}`}
         alt={block.imageLabel || ''}
         style={{ width: '100%', borderRadius: 8, display: 'block' }}
         onError={e => { e.target.style.display = 'none'; }}
