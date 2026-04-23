@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-
-const api = axios.create({ withCredentials: true });
+import api from '../api';
 
 export function useQuizResults(user) {
   // { lessonId: { correct, total, score, submittedAt } }

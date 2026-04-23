@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import axios from 'axios';
-
-const api = axios.create({ withCredentials: true });
+import api from '../api';
 
 const ROLE_COLOR = {
   owner:   { color: '#f59e0b', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)' },

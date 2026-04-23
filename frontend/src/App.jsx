@@ -1,12 +1,10 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import axios from 'axios';
 import Sidebar from './components/Sidebar';
 import ContentArea from './components/ContentArea';
 import Topbar from './components/Topbar';
 import { useProgress } from './hooks/useProgress';
 import { useQuizResults } from './hooks/useQuizResults';
-
-const api = axios.create({ withCredentials: true });
+import api from './api';
 
 export default function App() {
   const [curriculum, setCurriculum] = useState([]);
@@ -132,7 +130,7 @@ export default function App() {
         <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)' }}>LearnFlow</div>
         <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>Đăng nhập để bắt đầu học</div>
         <button
-          onClick={() => { window.location.href = '/auth/google'; }}
+          onClick={() => { window.location.href = (import.meta.env.VITE_API_URL || '') + '/auth/google'; }}
           style={{
             marginTop: 8,
             background: 'var(--accent)', border: 'none', color: '#fff',

@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import axios from 'axios';
 import MembersModal from './MembersModal';
-
-const api = axios.create({ withCredentials: true });
+import api from '../api';
 
 const ROLE_STYLE = {
   owner:   { color: '#f59e0b', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)' },
@@ -13,7 +11,7 @@ const ROLE_STYLE = {
 export default function Topbar({ user, totalDone, totalLessons, curriculum }) {
   const [showManage, setShowManage] = useState(false);
 
-  const handleLogin  = () => { window.location.href = '/auth/google'; };
+  const handleLogin  = () => { window.location.href = (import.meta.env.VITE_API_URL || '') + '/auth/google'; };
   const handleLogout = async () => {
     await api.post('/auth/logout').catch(() => {});
     window.location.reload();
