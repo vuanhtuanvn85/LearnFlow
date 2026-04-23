@@ -12,7 +12,11 @@ router.get('/google', passport.authenticate('google', {
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}?error=auth_failed` }),
   (req, res) => {
-    res.redirect(process.env.FRONTEND_URL);
+    // Trả HTML page thay vì redirect thẳng để browser lưu cookie trước khi chuyển trang
+    const frontendUrl = process.env.FRONTEND_URL;
+    res.send(`<!DOCTYPE html><html><head><meta charset="utf-8">
+<script>window.location.href = ${JSON.stringify(frontendUrl)};</script>
+</head><body>Đang chuyển hướng...</body></html>`);
   }
 );
 
