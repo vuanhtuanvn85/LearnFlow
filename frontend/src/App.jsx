@@ -4,14 +4,14 @@ import ContentArea from './components/ContentArea';
 import Topbar from './components/Topbar';
 import { useProgress } from './hooks/useProgress';
 import { useQuizResults } from './hooks/useQuizResults';
-import api from './api';
+import api, { saveToken } from './api';
 
 export default function App() {
   const [curriculum, setCurriculum] = useState([]);
   const [currentId, setCurrentId] = useState(() => localStorage.getItem('lf_lastLesson') || null);
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true); // đang kiểm tra session
-  const [enrolledSubjects, setEnrolledSubjects] = useState(null); // null = chưa load
+  const [authLoading, setAuthLoading] = useState(true);
+  const [enrolledSubjects, setEnrolledSubjects] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const { done, saved, markDone, markUndone, toggleSaved } = useProgress(user);
@@ -33,8 +33,15 @@ export default function App() {
       .catch(console.error);
   }, []);
 
-  // Check auth
+  // Check auth — đọc token từ URL (sau OAuth callback) hoặc localStorage
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    if (urlToken) {
+      saveToken(urlToken);
+      // Xoá token khỏi URL mà không reload trang
+      window.history.replaceState({}, '', window.location.pathname);
+    }
     api.get('/auth/me')
       .then(r => setUser(r.data))
       .catch(() => setUser(null))

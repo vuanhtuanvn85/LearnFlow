@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import MembersModal from './MembersModal';
-import api from '../api';
+import api, { clearToken } from '../api';
 
 const ROLE_STYLE = {
   owner:   { color: '#f59e0b', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)' },
@@ -14,6 +14,7 @@ export default function Topbar({ user, totalDone, totalLessons, curriculum }) {
   const handleLogin  = () => { window.location.href = (import.meta.env.VITE_API_URL || '') + '/auth/google'; };
   const handleLogout = async () => {
     await api.post('/auth/logout').catch(() => {});
+    clearToken();
     window.location.reload();
   };
 
