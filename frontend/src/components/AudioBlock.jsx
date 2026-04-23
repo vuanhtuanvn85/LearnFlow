@@ -29,7 +29,7 @@ export default function AudioBlock({ block, onEnded }) {
       {block.imageFile && (
         <div style={{ position: 'relative' }}>
           <img
-            src={`/images/${block.imageFile}`}
+            src={`/learnflow/images/${block.imageFile}`}
             alt={block.imageLabel || ''}
             style={{ width: '100%', display: 'block', maxHeight: 420, objectFit: 'cover' }}
             onError={e => { e.target.style.display = 'none'; }}

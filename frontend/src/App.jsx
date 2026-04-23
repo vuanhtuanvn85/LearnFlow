@@ -19,7 +19,7 @@ export default function App() {
 
   // Load content.json
   useEffect(() => {
-    fetch('/content.json')
+    fetch('/learnflow/content.json')
       .then(r => r.json())
       .then(data => {
         const valid = (data.curriculum || []).filter(s => s.id && s.title);

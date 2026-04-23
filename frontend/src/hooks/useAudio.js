@@ -80,7 +80,7 @@ export function useAudio({ audioFile, audioDuration, autoNext, onEnded }) {
     startCountdown();
   }, [startCountdown]);
 
-  const src = audioFile ? `/audios/${audioFile}` : null;
+  const src = audioFile ? `/learnflow/audios/${audioFile}` : null;
 
   return {
     audioRef,
