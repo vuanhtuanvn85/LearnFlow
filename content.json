@@ -1,0 +1,154 @@
+{
+  "_generated": "2026-04-23T10:24:37.854Z",
+  "_source": "learnflow-content.xlsx",
+  "curriculum": [
+    {
+      "id": "➕ Thêm môn mới: điền vào dòng tiếp theo. color_class: si-blue | si-green | si-amber | si-purple",
+      "title": "",
+      "icon": "",
+      "color": "",
+      "sessions": []
+    },
+    {
+      "id": "node",
+      "title": "Lập trình web với Node.js",
+      "icon": "NodeJS",
+      "color": "si-green",
+      "sessions": [
+        {
+          "id": "node-s1",
+          "title": "Buổi 1 — TỔNG QUAN NODE.JS VÀ MÔI TRƯỜNG PHÁT TRIỂN",
+          "lessons": [
+            {
+              "id": "node-s1-l1",
+              "title": "Giới thiệu môn học",
+              "type": "Bài đọc · 4 phút",
+              "autoNext": false,
+              "notes": "",
+              "completion": "quiz:1",
+              "blocks": [
+                {
+                  "type": "text",
+                  "content": "Python là ngôn ngữ lập trình bậc cao..."
+                },
+                {
+                  "type": "slideshow",
+                  "folder": "buoi1",
+                  "title": "Giới thiệu Python · 1:42",
+                  "slides": [],
+                  "autoNext": true
+                },
+                {
+                  "type": "link",
+                  "title": "Python Official Documentation",
+                  "url": "https://docs.python.org/3/",
+                  "icon": "📄"
+                }
+              ]
+            },
+            {
+              "id": "node-s1-l3",
+              "title": "Tổng quan Node.js",
+              "type": "Bài đọc + Audio · 5 phút",
+              "autoNext": true,
+              "notes": "",
+              "completion": "quiz:1",
+              "blocks": [
+                {
+                  "type": "text",
+                  "content": "Python có hai kiểu số: int và float..."
+                },
+                {
+                  "type": "image+audio",
+                  "imageFile": "int-float-memory.jpg",
+                  "imageLabel": "Giải thích Integer & Float · 2:05",
+                  "audioFile": "int-float.mp3",
+                  "audioLabel": "Giải thích Integer & Float · 2:05",
+                  "audioDuration": 125,
+                  "autoNext": true
+                },
+                {
+                  "type": "code",
+                  "lang": "python",
+                  "code": "x = 10\r\ny = 3.14\r\nprint(type(x))"
+                },
+                {
+                  "type": "quiz",
+                  "question": "Kết quả của `10 // 3` là gì?",
+                  "options": [
+                    "3.333",
+                    "3",
+                    "4",
+                    "Error"
+                  ],
+                  "correct": 1,
+                  "explain": ""
+                }
+              ]
+            },
+            {
+              "id": "node-s1-l4",
+              "title": "Thiết lập môi trường",
+              "type": "Bài đọc + Audio · 5 phút",
+              "autoNext": true,
+              "notes": "",
+              "completion": null,
+              "blocks": []
+            },
+            {
+              "id": "node-s1-l5",
+              "title": "Khởi tạo dự án",
+              "type": "Bài đọc + Audio · 5 phút",
+              "autoNext": true,
+              "notes": "",
+              "completion": null,
+              "blocks": []
+            },
+            {
+              "id": "node-s1-l2",
+              "title": "Tổng quan kiến trúc web",
+              "type": "Thực hành · 10 phút",
+              "autoNext": false,
+              "notes": "",
+              "completion": null,
+              "blocks": [
+                {
+                  "type": "text",
+                  "content": "Để bắt đầu, bạn cần cài Python và IDE..."
+                },
+                {
+                  "type": "code",
+                  "lang": "python",
+                  "code": "# hello.py\r\nprint('Hello World')"
+                },
+                {
+                  "type": "link",
+                  "title": "Tải Python 3.12",
+                  "url": "https://python.org/downloads",
+                  "icon": "📄"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "node-s2",
+          "title": "Buổi 2 — MODULES VÀ XỬ LÝ BẤT ĐỒNG BỘ TRONG NODE.JS",
+          "lessons": []
+        },
+        {
+          "id": "node-s3",
+          "title": "Buổi 3 — CÔNG CỤ HỖ TRỢ PHÁT TRIỂN SERVER NODE.JS",
+          "lessons": []
+        }
+      ]
+    },
+    {
+      "id": "aiud",
+      "title": "Trí tuệ nhân tạo ứng dụng",
+      "icon": "AIUD",
+      "color": "si-blue",
+      "sessions": []
+    }
+  ]
+}
