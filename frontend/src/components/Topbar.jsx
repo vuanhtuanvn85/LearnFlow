@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
 import MembersModal from './MembersModal';
-import EnrollmentModal from './EnrollmentModal';
 
 const api = axios.create({ withCredentials: true });
 
@@ -12,17 +11,15 @@ const ROLE_STYLE = {
 };
 
 export default function Topbar({ user, totalDone, totalLessons, curriculum }) {
-  const [showMembers, setShowMembers] = useState(false);
-  const [showEnrollment, setShowEnrollment] = useState(false);
+  const [showManage, setShowManage] = useState(false);
 
-  const handleLogin = () => { window.location.href = '/auth/google'; };
-
+  const handleLogin  = () => { window.location.href = '/auth/google'; };
   const handleLogout = async () => {
     await api.post('/auth/logout').catch(() => {});
     window.location.reload();
   };
 
-  const pct = totalLessons ? Math.round(totalDone / totalLessons * 100) : 0;
+  const pct    = totalLessons ? Math.round(totalDone / totalLessons * 100) : 0;
   const isStaff = user && ['owner', 'teacher'].includes(user.role);
 
   return (
@@ -33,7 +30,7 @@ export default function Topbar({ user, totalDone, totalLessons, curriculum }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 16px', flexShrink: 0,
       }}>
-        {/* Progress summary */}
+        {/* Progress bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 120, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
             <div style={{
@@ -49,30 +46,17 @@ export default function Topbar({ user, totalDone, totalLessons, curriculum }) {
         {/* User section */}
         {user ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Nút Khoá học — owner + teacher */}
+            {/* Nút quản lý — owner + teacher */}
             {isStaff && (
               <button
-                onClick={() => setShowEnrollment(true)}
+                onClick={() => setShowManage(true)}
                 style={{
                   background: 'none', border: '1px solid var(--border)',
                   color: 'var(--text-muted)', borderRadius: 5,
                   padding: '3px 10px', cursor: 'pointer', fontSize: 12,
                 }}
               >
-                Khoá học
-              </button>
-            )}
-            {/* Nút Thành viên — owner only */}
-            {user.role === 'owner' && (
-              <button
-                onClick={() => setShowMembers(true)}
-                style={{
-                  background: 'none', border: '1px solid var(--border)',
-                  color: 'var(--text-muted)', borderRadius: 5,
-                  padding: '3px 10px', cursor: 'pointer', fontSize: 12,
-                }}
-              >
-                Thành viên
+                Quản lý thành viên
               </button>
             )}
             {user.avatar && (
@@ -112,9 +96,12 @@ export default function Topbar({ user, totalDone, totalLessons, curriculum }) {
         )}
       </div>
 
-      {showMembers && <MembersModal onClose={() => setShowMembers(false)} />}
-      {showEnrollment && (
-        <EnrollmentModal curriculum={curriculum || []} onClose={() => setShowEnrollment(false)} />
+      {showManage && (
+        <MembersModal
+          curriculum={curriculum || []}
+          userRole={user?.role}
+          onClose={() => setShowManage(false)}
+        />
       )}
     </>
   );
