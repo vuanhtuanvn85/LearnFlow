@@ -13,6 +13,8 @@ import progressRouter from './routes/progress.js';
 import savedRouter from './routes/saved.js';
 import adminRouter from './routes/admin.js';
 import enrollmentRouter from './routes/enrollment.js';
+import quizResultRouter from './routes/quizResult.js';
+import gradesRouter from './routes/grades.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -85,6 +87,8 @@ app.use('/api/progress', progressRouter);
 app.use('/api/saved', savedRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/enrollment', enrollmentRouter);
+app.use('/api/quiz-result', quizResultRouter);
+app.use('/api/grades', gradesRouter);
 
 // ── Start ──────────────────────────────────────────────────
 app.listen(PORT, () => console.log(`🚀 Backend chạy tại http://localhost:${PORT}`));

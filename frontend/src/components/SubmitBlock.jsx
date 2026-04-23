@@ -4,7 +4,10 @@ function isValidUrl(str) {
   try { return Boolean(new URL(str)); } catch { return false; }
 }
 
-export default function SubmitBlock({ onSubmitted, submitted }) {
+export default function SubmitBlock({ block, onSubmitted, submitted }) {
+  const label = block?.label || 'Nộp bài thực hành';
+  const hint = block?.hint || '';
+
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
 
@@ -27,7 +30,7 @@ export default function SubmitBlock({ onSubmitted, submitted }) {
       }}>
         <span style={{ color: 'var(--green)', fontSize: 18 }}>✓</span>
         <div>
-          <div style={{ fontSize: 13, color: 'var(--green)', fontWeight: 500 }}>Đã nộp bài</div>
+          <div style={{ fontSize: 13, color: 'var(--green)', fontWeight: 500 }}>{label} — Đã nộp</div>
           <a
             href={submitted} target="_blank" rel="noreferrer"
             style={{ fontSize: 12, color: 'var(--text-muted)', wordBreak: 'break-all' }}
@@ -44,9 +47,14 @@ export default function SubmitBlock({ onSubmitted, submitted }) {
       background: 'var(--bg2)', border: '1px solid var(--border)',
       borderRadius: 10, padding: 16, marginBottom: 12,
     }}>
-      <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 10, color: 'var(--text)' }}>
-        Nộp bài thực hành
+      <div style={{ fontSize: 13, fontWeight: 500, marginBottom: hint ? 4 : 10, color: 'var(--text)' }}>
+        {label}
       </div>
+      {hint && (
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.5 }}>
+          {hint}
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 8 }}>
         <input
           type="url"

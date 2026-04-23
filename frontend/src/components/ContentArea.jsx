@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import AudioBlock from './AudioBlock';
 import SlideshowBlock from './SlideshowBlock';
 import CodeBlock from './CodeBlock';
@@ -44,6 +44,7 @@ function parseCompletion(completion) {
 export default function ContentArea({
   lesson, allLessons, currentIndex,
   onPrev, onNext, onMarkDone, onMarkUndone, done, saved, onToggleSaved,
+  quizResults, saveQuizResult,
 }) {
   const scrollRef = useRef(null);
   const isDone = lesson ? done.includes(lesson.id) : false;
@@ -53,13 +54,32 @@ export default function ContentArea({
   const [correctCount, setCorrectCount] = useState(0);
   // Submit: lưu link đã nộp
   const [submitLink, setSubmitLink] = useState('');
+  // Track if quiz result was already saved this session
+  const [quizSaved, setQuizSaved] = useState(false);
+
+  // Tổng số quiz block trong bài
+  const totalQuizCount = useMemo(
+    () => (lesson?.blocks ?? []).filter(b => b.type === 'quiz').length,
+    [lesson?.id]  // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   // Reset khi đổi bài
   useEffect(() => {
     setCorrectCount(0);
     setSubmitLink('');
+    setQuizSaved(false);
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
   }, [lesson?.id]);
+
+  // Lưu điểm khi tất cả quiz đã trả lời đúng đủ số lần
+  useEffect(() => {
+    if (!saveQuizResult || !lesson || totalQuizCount === 0) return;
+    if (quizSaved) return;
+    if (correctCount > 0 && correctCount >= totalQuizCount) {
+      setQuizSaved(true);
+      saveQuizResult(lesson.id, correctCount, totalQuizCount);
+    }
+  }, [correctCount, totalQuizCount, lesson?.id, quizSaved, saveQuizResult]);
 
   const completion = lesson ? parseCompletion(lesson.completion) : null;
 
@@ -130,6 +150,16 @@ export default function ContentArea({
           <h1 style={{ margin: 0, fontSize: 17, fontWeight: 600, color: 'var(--text)' }}>{lesson.title}</h1>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* Badge điểm quiz */}
+          {quizResults?.[lesson.id] && (
+            <span style={{
+              fontSize: 12, color: 'var(--amber)',
+              background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)',
+              borderRadius: 6, padding: '4px 10px',
+            }}>
+              Điểm: {quizResults[lesson.id].score}/10
+            </span>
+          )}
           {/* Badge đã học — click để đánh dấu chưa học */}
           {isDone && (
             <button
@@ -181,16 +211,11 @@ export default function ContentArea({
             <QuizBlock key={i} block={block} onCorrect={handleCorrect} />
           );
           if (block.type === 'link') return <LinkBlock key={i} block={block} />;
+          if (block.type === 'submit') return (
+            <SubmitBlock key={i} block={block} onSubmitted={handleSubmitted} submitted={submitLink} />
+          );
           return null;
         })}
-
-        {/* Submit block — chỉ render nếu completion = submit */}
-        {completion?.type === 'submit' && (
-          <SubmitBlock
-            onSubmitted={handleSubmitted}
-            submitted={submitLink}
-          />
-        )}
 
         {/* Notes */}
         {lesson.notes && (

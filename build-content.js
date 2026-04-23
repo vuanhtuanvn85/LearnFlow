@@ -108,6 +108,12 @@ function parseBlock(b) {
     return { type: 'link', title: content, url, icon: '📄' };
   }
 
+  if (type === 'submit') {
+    // content = label hiển thị (ví dụ: "Nộp link GitHub bài tập")
+    // caption = hướng dẫn thêm (tuỳ chọn)
+    return { type: 'submit', label: content || 'Nộp bài thực hành', hint: caption || '' };
+  }
+
   if (type === 'quiz') {
     // format: câu hỏi|A|B|C|D|index_đúng (0-based)
     const parts = content.split('|');
@@ -157,8 +163,13 @@ const curriculum = subjects
               })
               .filter(Boolean);
 
-            // completion: "" | "quiz:N" | "submit"
-            const completion = String(les.completion || '').trim().toLowerCase();
+            // completion: tự suy từ blocks — không cần nhập tay trong Excel
+            // Ưu tiên: submit > quiz:N > null
+            let completion = null;
+            const hasSubmit = lesBlocks.some(b => b.type === 'submit');
+            const quizCount = lesBlocks.filter(b => b.type === 'quiz').length;
+            if (hasSubmit) completion = 'submit';
+            else if (quizCount > 0) completion = `quiz:${quizCount}`;
 
             return {
               id: les.lesson_id,
@@ -166,7 +177,7 @@ const curriculum = subjects
               type: les.type_label || '',
               autoNext: autoNextDefault,
               notes: les.notes || '',
-              completion: completion || null,
+              completion,
               blocks: lesBlocks,
             };
           });

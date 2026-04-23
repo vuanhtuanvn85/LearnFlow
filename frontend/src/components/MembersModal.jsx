@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import axios from 'axios';
 
 const api = axios.create({ withCredentials: true });
@@ -293,9 +293,279 @@ function EnrollmentTab({ curriculum }) {
   );
 }
 
+// ── Tab 3: Bảng điểm ─────────────────────────────────────
+function GradesTab({ curriculum }) {
+  const subjects = curriculum.filter(s => s.id && s.title);
+  const [selectedSubject, setSelectedSubject] = useState(subjects[0]?.id || '');
+  const [data, setData] = useState(null); // { students, lessons, scores }
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState({}); // { `${userId}_${lessonId}`: true }
+  const [editCells, setEditCells] = useState({}); // { `${userId}_${lessonId}`: string }
+  const inputRefs = useRef({});
+
+  // Flatten all lessons cho subject đang chọn — giữ thứ tự bài học
+  const allLessonsInSubject = useMemo(() => {
+    const sub = curriculum.find(s => s.id === selectedSubject);
+    if (!sub) return [];
+    const list = [];
+    sub.sessions.forEach(ses => ses.lessons.forEach(l => list.push(l)));
+    return list;
+  }, [curriculum, selectedSubject]);
+
+  const gradedLessons = useMemo(
+    () => allLessonsInSubject.filter(l => l.completion && l.completion !== ''),
+    [allLessonsInSubject]
+  );
+
+  const load = useCallback(async (subjectId, lessons) => {
+    if (!subjectId || lessons.length === 0) { setData({ students: [], lessons: [], scores: {} }); return; }
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ lessons: JSON.stringify(lessons.map(l => ({ id: l.id, title: l.title, completion: l.completion }))) });
+      const res = await api.get(`/api/grades/${subjectId}?${params}`);
+      setData(res.data);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    setEditCells({});
+    load(selectedSubject, gradedLessons);
+  }, [selectedSubject, gradedLessons, load]);
+
+  const cellKey = (userId, lessonId) => `${userId}_${lessonId}`;
+
+  const getScore = (userId, lessonId) => {
+    const s = data?.scores?.[userId]?.[lessonId];
+    return s != null ? s.score : null;
+  };
+
+  const isSubmitLesson = (lesson) => lesson.completion === 'submit';
+  const isQuizLesson = (lesson) => lesson.completion?.startsWith('quiz:');
+
+  const handleCellChange = (userId, lessonId, val) => {
+    setEditCells(prev => ({ ...prev, [cellKey(userId, lessonId)]: val }));
+  };
+
+  const handleCellBlur = async (userId, lessonId, subjectId) => {
+    const key = cellKey(userId, lessonId);
+    const raw = editCells[key];
+    if (raw === undefined || raw === '') {
+      // clear edit state — revert
+      setEditCells(prev => { const n = { ...prev }; delete n[key]; return n; });
+      return;
+    }
+    const score = parseFloat(raw);
+    if (isNaN(score) || score < 0 || score > 10) {
+      setEditCells(prev => { const n = { ...prev }; delete n[key]; return n; });
+      return;
+    }
+    setSaving(prev => ({ ...prev, [key]: true }));
+    try {
+      await api.patch(`/api/grades/${subjectId}/${userId}/${lessonId}`, { score });
+      setData(prev => {
+        const scores = { ...prev.scores };
+        scores[userId] = { ...scores[userId], [lessonId]: { score, type: 'manual' } };
+        return { ...prev, scores };
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(prev => { const n = { ...prev }; delete n[key]; return n; });
+      setEditCells(prev => { const n = { ...prev }; delete n[key]; return n; });
+    }
+  };
+
+  const handleExport = () => {
+    if (!data?.students?.length) return;
+    const params = new URLSearchParams({ lessons: JSON.stringify(gradedLessons.map(l => ({ id: l.id, title: l.title, completion: l.completion }))) });
+    window.open(`/api/grades/${selectedSubject}/export?${params}`, '_blank');
+  };
+
+  const completionLabel = (lesson) => {
+    if (isSubmitLesson(lesson)) return 'Nộp';
+    if (isQuizLesson(lesson)) {
+      const n = lesson.completion.split(':')[1];
+      return `Quiz/${n}`;
+    }
+    return '';
+  };
+
+  const CELL_W = 72;
+
+  return (
+    <div style={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: 'column' }}>
+      {/* Toolbar */}
+      <div style={{
+        padding: '10px 16px', borderBottom: '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
+      }}>
+        <select
+          value={selectedSubject}
+          onChange={e => setSelectedSubject(e.target.value)}
+          style={{
+            background: 'var(--bg3)', border: '1px solid var(--border)',
+            color: 'var(--text)', borderRadius: 6, padding: '5px 8px', fontSize: 12, cursor: 'pointer',
+          }}
+        >
+          {subjects.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+        </select>
+        <span style={{ flex: 1, fontSize: 12, color: 'var(--text-muted)' }}>
+          {data ? `${data.students.length} học viên · ${data.lessons.length} bài có điểm` : ''}
+        </span>
+        <button
+          onClick={handleExport}
+          disabled={!data?.students?.length}
+          style={{
+            background: 'none', border: '1px solid var(--border)',
+            color: 'var(--text-muted)', borderRadius: 5,
+            padding: '3px 10px', cursor: 'pointer', fontSize: 12,
+            opacity: !data?.students?.length ? 0.4 : 1,
+          }}
+        >
+          Export CSV
+        </button>
+      </div>
+
+      {/* Table */}
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        {loading ? (
+          <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)' }}>Đang tải...</div>
+        ) : !data || data.lessons.length === 0 ? (
+          <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+            Môn này chưa có bài quiz hoặc bài nộp link.
+          </div>
+        ) : data.students.length === 0 ? (
+          <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-muted)', fontSize: 13 }}>
+            Chưa có học viên nào trong môn này.
+          </div>
+        ) : (
+          <table style={{ borderCollapse: 'collapse', minWidth: '100%' }}>
+            <thead>
+              <tr style={{ background: 'var(--bg2)' }}>
+                {/* Sticky name column header */}
+                <th style={{
+                  position: 'sticky', left: 0, zIndex: 2,
+                  background: 'var(--bg2)', padding: '9px 16px',
+                  textAlign: 'left', fontSize: 11, fontWeight: 600,
+                  color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em',
+                  borderBottom: '1px solid var(--border)', borderRight: '1px solid var(--border)',
+                  whiteSpace: 'nowrap', minWidth: 160,
+                }}>
+                  Học viên
+                </th>
+                {data.lessons.map(l => (
+                  <th key={l.id} style={{
+                    padding: '6px 8px', width: CELL_W, minWidth: CELL_W, maxWidth: CELL_W,
+                    textAlign: 'center', fontSize: 11, fontWeight: 500,
+                    color: 'var(--text-muted)', borderBottom: '1px solid var(--border)',
+                    verticalAlign: 'bottom',
+                  }}>
+                    <div style={{
+                      writingMode: 'vertical-rl', transform: 'rotate(180deg)',
+                      maxHeight: 100, overflow: 'hidden', textOverflow: 'ellipsis',
+                      fontSize: 11, lineHeight: 1.3, marginBottom: 4,
+                      color: 'var(--text)',
+                    }} title={l.title}>
+                      {l.title}
+                    </div>
+                    <div style={{
+                      fontSize: 10, color: isSubmitLesson(l) ? 'var(--amber)' : 'var(--accent)',
+                      marginTop: 2,
+                    }}>
+                      {completionLabel(l)}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.students.map((student, si) => (
+                <tr key={student.userId} style={{ borderBottom: '1px solid var(--border)', background: si % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                  {/* Sticky name */}
+                  <td style={{
+                    position: 'sticky', left: 0, zIndex: 1,
+                    background: si % 2 === 0 ? 'var(--bg)' : 'var(--bg2)',
+                    padding: '8px 16px', borderRight: '1px solid var(--border)',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {student.avatar
+                        ? <img src={student.avatar} alt="" style={{ width: 22, height: 22, borderRadius: '50%' }} />
+                        : <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--bg3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: 'var(--text-muted)' }}>{(student.name || '?')[0]}</div>
+                      }
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 500 }}>{student.name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{student.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  {data.lessons.map(l => {
+                    const key = cellKey(student.userId, l.id);
+                    const score = getScore(student.userId, l.id);
+                    const isEditing = editCells[key] !== undefined;
+                    const isSav = saving[key];
+                    const isSubmit = isSubmitLesson(l);
+
+                    return (
+                      <td key={l.id} style={{ padding: '6px 4px', textAlign: 'center', width: CELL_W }}>
+                        {isSubmit ? (
+                          // Editable cell for submit-type lessons
+                          <input
+                            ref={el => { inputRefs.current[key] = el; }}
+                            type="number"
+                            min={0} max={10} step={0.5}
+                            value={isEditing ? editCells[key] : (score != null ? score : '')}
+                            placeholder="–"
+                            disabled={isSav}
+                            onChange={e => handleCellChange(student.userId, l.id, e.target.value)}
+                            onBlur={() => handleCellBlur(student.userId, l.id, selectedSubject)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') inputRefs.current[key]?.blur();
+                              if (e.key === 'Escape') {
+                                setEditCells(prev => { const n = { ...prev }; delete n[key]; return n; });
+                              }
+                            }}
+                            style={{
+                              width: 52, textAlign: 'center', padding: '3px 4px',
+                              background: isEditing ? 'var(--bg)' : score != null ? 'rgba(245,158,11,0.08)' : 'var(--bg3)',
+                              border: `1px solid ${isEditing ? 'var(--amber)' : score != null ? 'rgba(245,158,11,0.3)' : 'var(--border)'}`,
+                              borderRadius: 4, color: score != null && !isEditing ? 'var(--amber)' : 'var(--text)',
+                              fontSize: 12, outline: 'none',
+                              opacity: isSav ? 0.5 : 1,
+                            }}
+                          />
+                        ) : (
+                          // Read-only cell for quiz-type lessons
+                          <span style={{
+                            display: 'inline-block', minWidth: 32, padding: '3px 6px',
+                            borderRadius: 4, fontSize: 12, fontWeight: score != null ? 500 : 400,
+                            background: score != null ? 'rgba(79,142,247,0.08)' : 'transparent',
+                            color: score != null ? 'var(--accent)' : 'var(--text-muted)',
+                          }}>
+                            {score != null ? score : '–'}
+                          </span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Modal chính ───────────────────────────────────────────
 export default function MembersModal({ curriculum, onClose, userRole }) {
-  const [tab, setTab] = useState('members');
+  // teacher mặc định vào tab grades; owner vào members
+  const [tab, setTab] = useState(userRole === 'owner' ? 'members' : 'grades');
+
+  // Grades tab cần modal rộng hơn
+  const modalWidth = tab === 'grades' ? 900 : 640;
 
   return (
     <div
@@ -308,13 +578,15 @@ export default function MembersModal({ curriculum, onClose, userRole }) {
     >
       <div style={{
         background: 'var(--bg2)', border: '1px solid var(--border)',
-        borderRadius: 10, width: 640, maxWidth: '94vw', maxHeight: '88vh',
+        borderRadius: 10, width: modalWidth, maxWidth: '96vw', maxHeight: '88vh',
         display: 'flex', flexDirection: 'column',
+        transition: 'width 0.2s',
       }}>
         {/* Header */}
         <div style={{
           padding: '0 20px', borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexShrink: 0,
         }}>
           <div style={{ display: 'flex', gap: 0 }}>
             {/* Tab: Thành viên — chỉ owner */}
@@ -326,6 +598,10 @@ export default function MembersModal({ curriculum, onClose, userRole }) {
             {/* Tab: Khoá học — owner + teacher */}
             <button onClick={() => setTab('enrollment')} style={tabStyle(tab === 'enrollment')}>
               Khoá học
+            </button>
+            {/* Tab: Bảng điểm — owner + teacher */}
+            <button onClick={() => setTab('grades')} style={tabStyle(tab === 'grades')}>
+              Bảng điểm
             </button>
           </div>
           <button
@@ -340,6 +616,7 @@ export default function MembersModal({ curriculum, onClose, userRole }) {
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           {tab === 'members' && userRole === 'owner' && <MembersTab />}
           {tab === 'enrollment' && <EnrollmentTab curriculum={curriculum || []} />}
+          {tab === 'grades' && <GradesTab curriculum={curriculum || []} />}
         </div>
       </div>
     </div>

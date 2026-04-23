@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import ContentArea from './components/ContentArea';
 import Topbar from './components/Topbar';
 import { useProgress } from './hooks/useProgress';
+import { useQuizResults } from './hooks/useQuizResults';
 
 const api = axios.create({ withCredentials: true });
 
@@ -16,6 +17,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const { done, saved, markDone, markUndone, toggleSaved } = useProgress(user);
+  const { quizResults, saveQuizResult } = useQuizResults(user);
 
   // Load content.json
   useEffect(() => {
@@ -196,6 +198,8 @@ export default function App() {
               onToggleSaved={toggleSaved}
               done={done}
               saved={saved}
+              quizResults={quizResults}
+              saveQuizResult={saveQuizResult}
             />
           )}
         </main>
