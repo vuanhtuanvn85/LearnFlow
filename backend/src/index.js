@@ -11,6 +11,7 @@ import User from './models/User.js';
 import authRouter from './routes/auth.js';
 import progressRouter from './routes/progress.js';
 import savedRouter from './routes/saved.js';
+import adminRouter from './routes/admin.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,11 +49,13 @@ passport.use(new GoogleStrategy({
   try {
     let user = await User.findOne({ googleId: profile.id });
     if (!user) {
+      const userCount = await User.countDocuments();
       user = await User.create({
         googleId: profile.id,
         email:    profile.emails[0].value,
         name:     profile.displayName,
         avatar:   profile.photos?.[0]?.value,
+        role:     userCount === 0 ? 'owner' : 'student',
       });
     } else {
       user.name   = profile.displayName;
@@ -79,6 +82,7 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/auth', authRouter);
 app.use('/api/progress', progressRouter);
 app.use('/api/saved', savedRouter);
+app.use('/api/admin', adminRouter);
 
 // ── Start ──────────────────────────────────────────────────
 app.listen(PORT, () => console.log(`🚀 Backend chạy tại http://localhost:${PORT}`));

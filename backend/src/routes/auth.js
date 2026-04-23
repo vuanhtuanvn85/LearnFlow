@@ -19,8 +19,8 @@ router.get('/google/callback',
 // Current user
 router.get('/me', (req, res) => {
   if (!req.isAuthenticated()) return res.status(401).json(null);
-  const { _id, name, email, avatar } = req.user;
-  res.json({ id: _id, name, email, avatar });
+  const { _id, name, email, avatar, role } = req.user;
+  res.json({ id: _id, name, email, avatar, role });
 });
 
 // Logout
