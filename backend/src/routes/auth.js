@@ -12,7 +12,7 @@ router.get('/google', passport.authenticate('google', {
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}?error=auth_failed` }),
   (req, res) => {
-    // Trả HTML page thay vì redirect thẳng để browser lưu cookie trước khi chuyển trang
+    console.log('[auth] callback OK, user:', req.user?.email, '| sessionID:', req.sessionID);
     const frontendUrl = process.env.FRONTEND_URL;
     res.send(`<!DOCTYPE html><html><head><meta charset="utf-8">
 <script>window.location.href = ${JSON.stringify(frontendUrl)};</script>
@@ -22,6 +22,7 @@ router.get('/google/callback',
 
 // Current user
 router.get('/me', (req, res) => {
+  console.log('[auth] /me | isAuthenticated:', req.isAuthenticated(), '| sessionID:', req.sessionID);
   if (!req.isAuthenticated()) return res.status(401).json(null);
   const { _id, name, email, avatar, role } = req.user;
   res.json({ id: _id, name, email, avatar, role });
