@@ -11,6 +11,7 @@ export default function App() {
   const [curriculum, setCurriculum] = useState([]);
   const [currentId, setCurrentId] = useState(() => localStorage.getItem('lf_lastLesson') || null);
   const [user, setUser] = useState(null);
+  const [enrolledSubjects, setEnrolledSubjects] = useState(null); // null = chưa load
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const { done, saved, markDone, toggleSaved } = useProgress(user);
@@ -36,20 +37,44 @@ export default function App() {
     api.get('/auth/me').then(r => setUser(r.data)).catch(() => setUser(null));
   }, []);
 
-  // Flatten all lessons
-  const allLessons = useMemo(() => {
-    const list = [];
-    curriculum.forEach(sub => sub.sessions.forEach(ses => ses.lessons.forEach(l => list.push(l))));
-    return list;
-  }, [curriculum]);
-
-  const currentIndex = useMemo(() => allLessons.findIndex(l => l.id === currentId), [allLessons, currentId]);
-  const currentLesson = allLessons[currentIndex] ?? null;
+  // Fetch enrolled subjects khi user là student
+  useEffect(() => {
+    if (!user) { setEnrolledSubjects(null); return; }
+    if (user.role !== 'student') { setEnrolledSubjects(null); return; }
+    api.get('/api/enrollment/my')
+      .then(r => setEnrolledSubjects(r.data))
+      .catch(() => setEnrolledSubjects([]));
+  }, [user]);
 
   const selectLesson = useCallback((id) => {
     setCurrentId(id);
     localStorage.setItem('lf_lastLesson', id);
   }, []);
+
+  // Curriculum được lọc theo enrollment (chỉ áp dụng cho student)
+  const visibleCurriculum = useMemo(() => {
+    if (!user || user.role !== 'student') return curriculum;
+    if (enrolledSubjects === null) return []; // đang load
+    return curriculum.filter(s => enrolledSubjects.includes(s.id));
+  }, [curriculum, user, enrolledSubjects]);
+
+  // Flatten all lessons (chỉ từ môn được phép xem)
+  const allLessons = useMemo(() => {
+    const list = [];
+    visibleCurriculum.forEach(sub => sub.sessions.forEach(ses => ses.lessons.forEach(l => list.push(l))));
+    return list;
+  }, [visibleCurriculum]);
+
+  // Reset về bài đầu tiên nếu currentId không thuộc môn được phép xem
+  useEffect(() => {
+    if (allLessons.length === 0) return;
+    if (!currentId || !allLessons.find(l => l.id === currentId)) {
+      selectLesson(allLessons[0].id);
+    }
+  }, [allLessons, currentId, selectLesson]);
+
+  const currentIndex = useMemo(() => allLessons.findIndex(l => l.id === currentId), [allLessons, currentId]);
+  const currentLesson = allLessons[currentIndex] ?? null;
 
   const goPrev = useCallback(() => {
     if (currentIndex > 0) selectLesson(allLessons[currentIndex - 1].id);
@@ -73,7 +98,7 @@ export default function App() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-      <Topbar user={user} totalDone={done.length} totalLessons={allLessons.length} />
+      <Topbar user={user} totalDone={done.length} totalLessons={allLessons.length} curriculum={curriculum} />
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* Mobile toggle */}
         <button
@@ -91,7 +116,7 @@ export default function App() {
 
         {sidebarOpen && (
           <Sidebar
-            curriculum={curriculum}
+            curriculum={visibleCurriculum}
             currentId={currentId}
             done={done}
             saved={saved}
@@ -100,17 +125,29 @@ export default function App() {
         )}
 
         <main style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <ContentArea
-            lesson={currentLesson}
-            allLessons={allLessons}
-            currentIndex={currentIndex < 0 ? 0 : currentIndex}
-            onPrev={goPrev}
-            onNext={goNext}
-            onMarkDone={markDone}
-            onToggleSaved={toggleSaved}
-            done={done}
-            saved={saved}
-          />
+          {user?.role === 'student' && enrolledSubjects !== null && enrolledSubjects.length === 0 ? (
+            <div style={{
+              flex: 1, display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 10,
+              color: 'var(--text-muted)', fontSize: 14,
+            }}>
+              <div style={{ fontSize: 32 }}>📭</div>
+              <div>Bạn chưa được đăng ký vào khoá học nào.</div>
+              <div style={{ fontSize: 12 }}>Vui lòng liên hệ giáo viên để được thêm vào khoá học.</div>
+            </div>
+          ) : (
+            <ContentArea
+              lesson={currentLesson}
+              allLessons={allLessons}
+              currentIndex={currentIndex < 0 ? 0 : currentIndex}
+              onPrev={goPrev}
+              onNext={goNext}
+              onMarkDone={markDone}
+              onToggleSaved={toggleSaved}
+              done={done}
+              saved={saved}
+            />
+          )}
         </main>
       </div>
     </div>

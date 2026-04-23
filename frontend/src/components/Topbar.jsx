@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import MembersModal from './MembersModal';
+import EnrollmentModal from './EnrollmentModal';
 
 const api = axios.create({ withCredentials: true });
 
@@ -10,12 +11,11 @@ const ROLE_STYLE = {
   student: { color: '#8b9cbf', background: 'rgba(139,156,191,0.1)',  border: '1px solid rgba(139,156,191,0.2)' },
 };
 
-export default function Topbar({ user, totalDone, totalLessons }) {
+export default function Topbar({ user, totalDone, totalLessons, curriculum }) {
   const [showMembers, setShowMembers] = useState(false);
+  const [showEnrollment, setShowEnrollment] = useState(false);
 
-  const handleLogin = () => {
-    window.location.href = '/auth/google';
-  };
+  const handleLogin = () => { window.location.href = '/auth/google'; };
 
   const handleLogout = async () => {
     await api.post('/auth/logout').catch(() => {});
@@ -23,6 +23,7 @@ export default function Topbar({ user, totalDone, totalLessons }) {
   };
 
   const pct = totalLessons ? Math.round(totalDone / totalLessons * 100) : 0;
+  const isStaff = user && ['owner', 'teacher'].includes(user.role);
 
   return (
     <>
@@ -34,13 +35,10 @@ export default function Topbar({ user, totalDone, totalLessons }) {
       }}>
         {/* Progress summary */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 120, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden',
-          }}>
+          <div style={{ width: 120, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
             <div style={{
               width: `${pct}%`, height: '100%',
-              background: 'var(--green)', borderRadius: 2,
-              transition: 'width 0.4s',
+              background: 'var(--green)', borderRadius: 2, transition: 'width 0.4s',
             }} />
           </div>
           <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
@@ -50,7 +48,21 @@ export default function Topbar({ user, totalDone, totalLessons }) {
 
         {/* User section */}
         {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Nút Khoá học — owner + teacher */}
+            {isStaff && (
+              <button
+                onClick={() => setShowEnrollment(true)}
+                style={{
+                  background: 'none', border: '1px solid var(--border)',
+                  color: 'var(--text-muted)', borderRadius: 5,
+                  padding: '3px 10px', cursor: 'pointer', fontSize: 12,
+                }}
+              >
+                Khoá học
+              </button>
+            )}
+            {/* Nút Thành viên — owner only */}
             {user.role === 'owner' && (
               <button
                 onClick={() => setShowMembers(true)}
@@ -101,6 +113,9 @@ export default function Topbar({ user, totalDone, totalLessons }) {
       </div>
 
       {showMembers && <MembersModal onClose={() => setShowMembers(false)} />}
+      {showEnrollment && (
+        <EnrollmentModal curriculum={curriculum || []} onClose={() => setShowEnrollment(false)} />
+      )}
     </>
   );
 }

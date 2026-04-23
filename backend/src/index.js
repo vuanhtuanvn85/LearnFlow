@@ -12,6 +12,7 @@ import authRouter from './routes/auth.js';
 import progressRouter from './routes/progress.js';
 import savedRouter from './routes/saved.js';
 import adminRouter from './routes/admin.js';
+import enrollmentRouter from './routes/enrollment.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -83,6 +84,7 @@ app.use('/auth', authRouter);
 app.use('/api/progress', progressRouter);
 app.use('/api/saved', savedRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/enrollment', enrollmentRouter);
 
 // ── Start ──────────────────────────────────────────────────
 app.listen(PORT, () => console.log(`🚀 Backend chạy tại http://localhost:${PORT}`));
