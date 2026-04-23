@@ -65,7 +65,8 @@ function parseBlock(b) {
   const dur = parseInt(b['audio_duration_s']) || 0;
   const caption = (b['caption / code_lang'] || '').trim();
   const url = (b['link_url'] || '').trim();
-  const anOvr = (b['auto_next_override'] || '').toUpperCase();
+  const anOvrRaw = b['auto_next_override'];
+  const anOvr = anOvrRaw === true ? 'TRUE' : anOvrRaw === false ? 'FALSE' : String(anOvrRaw || '').toUpperCase();
 
   if (type === 'text') {
     return { type: 'text', content };
@@ -80,6 +81,21 @@ function parseBlock(b) {
       audioFile: audio || null,
       audioLabel: caption || (audio ? audio.replace('.mp3', '') : 'Audio'),
       audioDuration: dur,
+      ...(autoNext !== null && { autoNextOverride: autoNext }),
+    };
+  }
+
+  // slideshow: tự động detect số slide từ folder khi chạy trên browser
+  // content = tên thư mục (ví dụ: "buoi1" hoặc "chuong1/tiet1")
+  // caption = tiêu đề hiển thị
+  // Naming convention: images/<folder>/slide_1.png, audios/<folder>/slide_1.mp3
+  if (type === 'slideshow') {
+    const autoNext = anOvr === 'TRUE' ? true : anOvr === 'FALSE' ? false : null;
+    return {
+      type: 'slideshow',
+      folder: content.trim(),
+      title: caption || content.trim(),
+      slides: [], // browser tự probe số lượng slide
       ...(autoNext !== null && { autoNextOverride: autoNext }),
     };
   }
@@ -128,7 +144,7 @@ const curriculum = subjects
               .sort((a, b) => (a.block_order || 0) - (b.block_order || 0))
               .map(b => {
                 const parsed = parseBlock(b);
-                if (parsed && parsed.type === 'image+audio') {
+                if (parsed && (parsed.type === 'image+audio' || parsed.type === 'slideshow')) {
                   // lesson-level auto_next, có thể override per-block
                   if (parsed.autoNextOverride === undefined) {
                     parsed.autoNext = autoNextDefault;

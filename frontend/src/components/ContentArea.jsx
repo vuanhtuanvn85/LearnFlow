@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import AudioBlock from './AudioBlock';
+import SlideshowBlock from './SlideshowBlock';
 import CodeBlock from './CodeBlock';
 import QuizBlock from './QuizBlock';
 import LinkBlock from './LinkBlock';
@@ -118,6 +119,9 @@ export default function ContentArea({
           if (block.type === 'text') return <TextBlock key={i} block={block} />;
           if (block.type === 'image+audio') return (
             <AudioBlock key={i} block={block} onEnded={block.autoNext ? handleAutoNext : undefined} />
+          );
+          if (block.type === 'slideshow') return (
+            <SlideshowBlock key={i} block={block} onEnded={block.autoNext ? handleAutoNext : undefined} />
           );
           if (block.type === 'image') return <ImageBlock key={i} block={block} />;
           if (block.type === 'code') return <CodeBlock key={i} block={block} />;

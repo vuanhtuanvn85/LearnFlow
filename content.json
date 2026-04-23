@@ -1,5 +1,5 @@
 {
-  "_generated": "2026-04-23T04:20:00.218Z",
+  "_generated": "2026-04-23T09:45:55.858Z",
   "_source": "learnflow-content.xlsx",
   "curriculum": [
     {
@@ -31,13 +31,11 @@
                   "content": "Python là ngôn ngữ lập trình bậc cao..."
                 },
                 {
-                  "type": "image+audio",
-                  "imageFile": "slide-1.png",
-                  "imageLabel": "Giới thiệu Python · 1:42",
-                  "audioFile": "slide_1.mp3",
-                  "audioLabel": "Giới thiệu Python · 1:42",
-                  "audioDuration": 102,
-                  "autoNext": false
+                  "type": "slideshow",
+                  "folder": "buoi1",
+                  "title": "Giới thiệu Python · 1:42",
+                  "slides": [],
+                  "autoNext": true
                 },
                 {
                   "type": "link",
